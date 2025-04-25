@@ -31,15 +31,21 @@ postgresClient.on('connect', (client) => {
 });
 
 // Redis Client Setup
-const redis = require('redis');
+const { createClient } = require('redis');
 
-const redisClient = redis.createClient({
-  host: keys.redisHost,
-  port: keys.redisPort,
-  retry_strategy: () => 1000,
+const redisClient = createClient({
+  // host: keys.redisHost,
+  // port: keys.redisPort,
+  // retry_strategy: () => 1000,
+  url: `redis://${keys.redisHost}:${keys.redisPort}`,
 });
 
 const redisPublisher = redisClient.duplicate();
+
+// Connect Redis Client
+redisClient
+  .connect()
+  .catch((err) => console.error('Redis connection error', err));
 
 // Express route handlers
 app.get('/', (req, res) => {
@@ -47,14 +53,23 @@ app.get('/', (req, res) => {
 });
 
 app.get('/values/all', async (req, res) => {
-  const values = await pgClient.query('SELECT * from values');
-  res.send(values.rows);
+  try {
+    const result = await postgresClient.query('SELECT * from values');
+    res.send(result.rows);
+  } catch (err) {
+    console.error('Error fetching values:', err);
+    res.status(500).send('Error fetching values');
+  }
 });
 
 app.get('/values/current', async (req, res) => {
-  redisClient.hgetall('values', (err, values) => {
+  try {
+    const values = await redisClient.hGetAll('values');
     res.send(values);
-  });
+  } catch (err) {
+    console.error('Error fetching values from Redis:', err);
+    res.status(500).send('Error fetching values from Redis');
+  }
 });
 
 app.post('/values', async (req, res) => {
@@ -64,13 +79,22 @@ app.post('/values', async (req, res) => {
     return res.status(422).send('Index too high');
   }
 
-  redisClient.hset('values', index, 'Nothing yet!');
-  redisPublisher.publish('insert', index);
-  pgClient.query('INSERT INTO values(number) VALUES($1)', [index]);
-
-  res.send({ working: true });
+  try {
+    // Store in Redis
+    await redisClient.hSet('values', index, 'Nothing yet!');
+    // Publish the change in Redis
+    redisPublisher.publish('insert', index);
+    // Insert into PostgreSQL
+    await postgresClient.query('INSERT INTO values(number) VALUES($1)', [
+      index,
+    ]);
+    res.send({ working: true });
+  } catch (err) {
+    console.error('Error processing POST request:', err);
+    res.status(500).send('Error processing the request');
+  }
 });
 
-app.listen(5000, (err) => {
+app.listen(5000, () => {
   console.log('Listening on port 5000');
 });
