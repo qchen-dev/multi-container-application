@@ -1,23 +1,30 @@
 services:
-
   postgres:
-    image: "postgres:latest"
+    image: 'postgres:latest'
     container_name: postgres
     environment:
       - POSTGRES_PASSWORD=postgres_password
 
   redis:
-    image: "redis:latest"
+    image: 'redis:latest'
     container_name: redis
 
-  server:
+  nginx:
+    restart: always
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile.dev
+    ports:
+      - '3080:80'
+
+  api:
     build:
       context: ./server
       dockerfile: Dockerfile.dev
     image: complex/server:latest
     container_name: complex-server
     ports:
-      - "5000:5000"
+      - '5000:5000'
     volumes:
       - /app/node_modules
       - ./server:/app
@@ -50,7 +57,7 @@ services:
     image: complex/client:latest
     container_name: complex-client
     ports:
-      - "5173:5173"
+      - '5173:5173'
     volumes:
       - /app/node_modules
       - ./client:/app
