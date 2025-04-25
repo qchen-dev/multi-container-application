@@ -34,9 +34,6 @@ postgresClient.on('connect', (client) => {
 const { createClient } = require('redis');
 
 const redisClient = createClient({
-  // host: keys.redisHost,
-  // port: keys.redisPort,
-  // retry_strategy: () => 1000,
   url: `redis://${keys.redisHost}:${keys.redisPort}`,
 });
 
@@ -45,6 +42,7 @@ const redisPublisher = redisClient.duplicate();
 // Connect Redis Client
 redisClient
   .connect()
+  .then(() => console.log('Connected to Redis'))
   .catch((err) => console.error('Redis connection error', err));
 
 // Express route handlers
@@ -73,6 +71,7 @@ app.get('/values/current', async (req, res) => {
 });
 
 app.post('/values', async (req, res) => {
+  console.log('visit /values', req.body);
   const index = req.body.index;
 
   if (parseInt(index) > 40) {
