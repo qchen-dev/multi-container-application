@@ -1,21 +1,90 @@
 const keys = require('./keys');
-const redis = require('redis');
 
-const redisClient = redis.createClient({
-  host: keys.redisHost,
-  port: keys.redisPort,
-  retry_strategy: () => 1000,
+// Redis Client Setup
+// https://redis.io/docs/latest/develop/clients/nodejs/
+const { createClient } = require('redis');
+
+const redisClient = createClient({
+  url: `redis://${keys.redisHost}:${keys.redisPort}`,
+  socket: {
+    reconnectStrategy: (retries) => {
+      // Generate a random jitter between 0 – 200 ms:
+      const jitter = Math.floor(Math.random() * 200);
+
+      // Delay is an exponential back off, (times^2) * 50 ms, with a
+      // maximum value of 2000 ms:
+      const delay = Math.min(Math.pow(2, retries) * 50, 2000);
+
+      return delay + jitter;
+    },
+  },
 });
 
-const sub = redisClient.duplicate();
+// Connect Redis Client
+redisClient
+  .connect()
+  .then(() => console.log('Connected to Redis'))
+  .catch((err) => console.error('Redis connection error:', err));
 
+// Function to simulate Fibonacci calculation
 function fib(index) {
   if (index < 2) return 1;
   return fib(index - 1) + fib(index - 2);
 }
 
-sub.on('message', (channel, message) => {
-  redisClient.hset('values', message, fib(parseInt(message)));
+// Redis Subscriber Setup (duplicate instance to handle subscriptions)
+const redisSubscriber = redisClient.duplicate();
+
+redisSubscriber
+  .connect()
+  .then(() => console.log('Connected to Redis subscriber'))
+  .catch((err) => console.error('Redis connection error:', err));
+
+// Subscribe to the 'insert' channel
+redisSubscriber.subscribe('insert', (message, channel) => {
+  console.log('Received message:', message);
+  console.log('Channel:', channel);
+
+  try {
+    const index = parseInt(message);
+
+    if (isNaN(index)) {
+      console.error('Received invalid index:', message);
+      return;
+    }
+
+    // Calculate the Fibonacci number for the received index
+    const fibValue = fib(index);
+
+    console.log(`Calculated Fibonacci for index ${index}: ${fibValue}`);
+
+    // Store the Fibonacci result in Redis
+    redisClient
+      .hSet('values', index.toString(), fibValue.toString())
+      .then(() => {
+        console.log(`Stored Fibonacci value for index ${index}: ${fibValue}`);
+      })
+      .catch((err) => {
+        console.error('Error storing Fibonacci result in Redis:', err);
+      });
+  } catch (err) {
+    console.error('Error processing message:', err);
+  }
 });
 
-sub.subscribe('insert');
+// Handling messages from the subscribed channel
+redisSubscriber.on('message', (channel, message) => {
+  console.log(`Received message on channel ${channel}: ${message}`);
+  try {
+    // Process the message, assuming it's an index
+    const index = parseInt(message);
+    if (isNaN(index)) {
+      console.error('Invalid index received:', message);
+      return;
+    }
+    // Store the computed Fibonacci value in Redis
+    redisClient.hSet('values', message, fib(index));
+  } catch (err) {
+    console.error('Error processing message:', err);
+  }
+});
