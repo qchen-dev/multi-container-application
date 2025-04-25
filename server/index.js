@@ -31,19 +31,51 @@ postgresClient.on('connect', (client) => {
 });
 
 // Redis Client Setup
+// https://redis.io/docs/latest/develop/clients/nodejs/
 const { createClient } = require('redis');
 
 const redisClient = createClient({
   url: `redis://${keys.redisHost}:${keys.redisPort}`,
+  socket: {
+    reconnectStrategy: (retries) => {
+      // Generate a random jitter between 0 – 200 ms:
+      const jitter = Math.floor(Math.random() * 200);
+
+      // Delay is an exponential back off, (times^2) * 50 ms, with a
+      // maximum value of 2000 ms:
+      const delay = Math.min(Math.pow(2, retries) * 50, 2000);
+
+      return delay + jitter;
+    },
+  },
 });
 
 const redisPublisher = redisClient.duplicate();
 
+redisPublisher
+  .connect()
+  .then(() => console.log('Redis Publisher connected'))
+  .catch((err) =>
+    console.error('Redis Publisher not connected ERROR', err)
+  );
+
 // Connect Redis Client
 redisClient
   .connect()
-  .then(() => console.log('Connected to Redis'))
-  .catch((err) => console.error('Redis connection error', err));
+  .then(() => console.log('Redis Client connected'))
+  .catch((err) => console.error('Redis Client connection error', err));
+
+redisClient.on('error', (err) => {
+  console.error('Redis error occurred:', err);
+});
+
+redisClient.on('connect', () => {
+  console.log('Redis connected');
+});
+
+redisClient.on('end', () => {
+  console.error('Redis client disconnected unexpectedly');
+});
 
 // Express route handlers
 app.get('/', (req, res) => {
@@ -79,14 +111,39 @@ app.post('/values', async (req, res) => {
   }
 
   try {
+    // Check if Redis is connected
+    if (!redisClient.isOpen) {
+      throw new Error('Redis client is not connected');
+    }
+
+    // Wait for Redis to be ready
+    if (redisClient.isReady && redisClient.isOpen) {
+      console.log('Redis client is ready and open');
+    }
+
     // Store in Redis
     await redisClient.hSet('values', index, 'Nothing yet!');
-    // Publish the change in Redis
-    redisPublisher.publish('insert', index);
+
+    console.log(
+      'Redis Publisher is ready, open:',
+      redisPublisher.isReady,
+      redisPublisher.isOpen
+    );
+
+    // Ensure the Redis publisher is connected before publishing
+    if (redisPublisher.isReady && redisPublisher.isOpen) {
+      // Ensure index is a string before publishing to Redis
+      await redisPublisher.publish('insert', String(index)); // Convert index to a string
+    } else {
+      console.error('Redis Publisher is not ready or open');
+      throw new Error('Redis Publisher is not connected');
+    }
+
     // Insert into PostgreSQL
     await postgresClient.query('INSERT INTO values(number) VALUES($1)', [
       index,
     ]);
+
     res.send({ working: true });
   } catch (err) {
     console.error('Error processing POST request:', err);
