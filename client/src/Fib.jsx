@@ -3,19 +3,18 @@ import { useForm } from 'react-hook-form';
 import axios from 'axios';
 
 function Fib() {
-  //   const [indexes, setIndexes] = useState([2, 3, 4]);
-  const [indexes, setIndexes] = useState(['2', '3', '4']);
+  const [indexes, setIndexes] = useState([]); // Make it an array
   const [values, setValues] = useState({});
 
   useEffect(() => {
     const fetchValues = async () => {
       const values = await axios.get('/api/values/current');
-      setValues({ values: values.data });
+      setValues(values.data); // Set the raw data
     };
 
     const fetchIndexes = async () => {
       const indexes = await axios.get('/api/values/all');
-      setIndexes({ indexes: indexes.data });
+      setIndexes(indexes.data); // Set the raw data
     };
 
     fetchValues();
@@ -40,20 +39,18 @@ function Fib() {
   console.log('watch on input change:', watch('index'));
 
   function renderIndexes() {
-    return indexes.join(', ');
+    return indexes.join(', '); // Simple way to display all indexes
   }
 
   function renderValues() {
     const entries = [];
-
     for (let key in values) {
       entries.push(
         <div key={key}>
-          for index {key} I calculated {values[key]}
+          For index {key}, I calculated {values[key]}
         </div>
       );
     }
-
     return entries;
   }
 
@@ -63,24 +60,24 @@ function Fib() {
       <form onSubmit={handleSubmit(onSubmit)}>
         <label>Enter your index:</label>
 
-        {/* include validation with required or other standard HTML validation rules */}
+        {/* Include validation with required or other standard HTML validation rules */}
         <input
           type='number'
           defaultValue=''
           {...register('index', { required: true })}
         />
 
-        {/* errors will return when field validation fails  */}
-        {errors.indexRequired && <span>This index field is required</span>}
+        {/* errors will return when field validation fails */}
+        {errors.index && <span>This index field is required</span>}
 
         <input type='submit' />
       </form>
 
       <h3>Indexes I have seen:</h3>
-      {renderIndexes()}
+      <div>{renderIndexes()}</div>
 
       <h3>Calculated Values:</h3>
-      {renderValues()}
+      <div>{renderValues()}</div>
     </>
   );
 }
