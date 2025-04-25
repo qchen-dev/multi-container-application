@@ -12,19 +12,19 @@ app.use(bodyParser.json());
 // Postgres Client Setup
 const { Pool } = require('pg');
 
-const pgClient = new Pool({
-  user: keys.pgUser,
-  host: keys.pgHost,
-  database: keys.pgDatabase,
-  password: keys.pgPassword,
-  port: keys.pgPort,
+const postgresClient = new Pool({
+  user: keys.postgresUser,
+  host: keys.postgresHost,
+  database: keys.postgresDatabase,
+  password: keys.postgresPassword,
+  port: keys.postgresPort,
   ssl:
     process.env.NODE_ENV !== 'production'
       ? false
       : { rejectUnauthorized: false },
 });
 
-pgClient.on('connect', (client) => {
+postgresClient.on('connect', (client) => {
   client
     .query('CREATE TABLE IF NOT EXISTS values (number INT)')
     .catch((err) => console.error(err));
