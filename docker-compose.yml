@@ -1,0 +1,56 @@
+services:
+
+  postgres:
+    image: "postgres:latest"
+    container_name: postgres
+    environment:
+      - POSTGRES_PASSWORD=postgres_password
+
+  redis:
+    image: "redis:latest"
+    container_name: redis
+
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile.dev
+    image: complex/server:latest
+    container_name: complex-server
+    ports:
+      - "5000:5000"
+    volumes:
+      - /app/node_modules
+      - ./server:/app
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - POSTGRES_USER=postgres
+      - POSTGRES_HOST=postgres
+      - POSTGRES_DATABASE=postgres
+      - POSTGRES_PASSWORD=postgres_password
+      - POSTGRES_PORT=5432
+
+  worker:
+    build:
+      context: ./worker
+      dockerfile: Dockerfile.dev
+    image: complex/worker:latest
+    container_name: complex-worker
+    volumes:
+      - /app/node_modules
+      - ./worker:/app
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile.dev
+    image: complex/client:latest
+    container_name: complex-client
+    ports:
+      - "5173:5173"
+    volumes:
+      - /app/node_modules
+      - ./client:/app
