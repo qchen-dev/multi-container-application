@@ -27,8 +27,6 @@ services:
       dockerfile: Dockerfile.dev
     image: complex/server:latest
     container_name: complex-server
-    ports:
-      - '5000:5000'
     volumes:
       - /app/node_modules
       - ./server:/app
@@ -60,8 +58,6 @@ services:
       dockerfile: Dockerfile.dev
     image: complex/client:latest
     container_name: complex-client
-    ports:
-      - '5173:5173'
     volumes:
       - /app/node_modules
       - ./client:/app
