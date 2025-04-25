@@ -7,20 +7,20 @@ function Fib() {
   const [indexes, setIndexes] = useState(['2', '3', '4']);
   const [values, setValues] = useState({});
 
-  //   useEffect(() => {
-  //     const fetchValues = async () => {
-  //       const values = await axios.get('/api/values/current');
-  //       setValues({ values: values.data });
-  //     };
+  useEffect(() => {
+    const fetchValues = async () => {
+      const values = await axios.get('/api/values/current');
+      setValues({ values: values.data });
+    };
 
-  //     const fetchIndexes = async () => {
-  //       const indexes = await axios.get('/api/values/all');
-  //       setIndexes({ indexes: indexes.data });
-  //     };
+    const fetchIndexes = async () => {
+      const indexes = await axios.get('/api/values/all');
+      setIndexes({ indexes: indexes.data });
+    };
 
-  //     fetchValues();
-  //     fetchIndexes();
-  //   }, []);
+    fetchValues();
+    fetchIndexes();
+  }, []);
 
   const {
     register,
