@@ -22,8 +22,17 @@ const redisClient = createClient({
 
 // Function to simulate Fibonacci calculation
 function fib(index) {
-  if (index < 2) return 1;
-  return fib(index - 1) + fib(index - 2);
+  if (index <= 2) return 1;
+
+  let prev = 1;
+  let next = 1;
+  for (let i = 3; i <= index; i++) {
+    const temp = next;
+    next = prev + next;
+    prev = temp;
+  }
+
+  return next;
 }
 
 // Redis Subscriber Setup (duplicate instance to handle subscriptions)
