@@ -16,17 +16,17 @@ jobs:
         run: docker login -u "${{ secrets.DOCKER_USERNAME }}" -p "${{ secrets.DOCKER_PASSWORD }}"
 
       # - name: Build Docker image for testing (using Dockerfile.dev)
-      #   run: docker build -t nickdev/react-test -f ./client/Dockerfile.dev ./client
+      #   run: docker build -t nickchendev/react-test -f ./client/Dockerfile.dev ./client
 
       # - name: Run tests in Docker container
       #   run: docker run -e CI=true rallycoding/react-test npm test
 
-      - run: docker build -t nickdev/multi-client ./client
-      - run: docker build -t nickdev/multi-nginx ./nginx
-      - run: docker build -t nickdev/multi-server ./server
-      - run: docker build -t nickdev/multi-worker ./worker
+      - run: docker build -t nickchendev/multi-client ./client
+      - run: docker build -t nickchendev/multi-nginx ./nginx
+      - run: docker build -t nickchendev/multi-server ./server
+      - run: docker build -t nickchendev/multi-worker ./worker
 
-      - run: docker push nickdev/multi-client
-      - run: docker push nickdev/multi-nginx
-      - run: docker push nickdev/multi-server
-      - run: docker push nickdev/multi-worker
+      - run: docker push nickchendev/multi-client
+      - run: docker push nickchendev/multi-nginx
+      - run: docker push nickchendev/multi-server
+      - run: docker push nickchendev/multi-worker
