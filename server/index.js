@@ -52,28 +52,30 @@ const redisClient = createClient({
 
 const redisPublisher = redisClient.duplicate();
 
-redisPublisher
-  .connect()
-  .then(() => console.log('Redis Publisher connected'))
-  .catch((err) => console.error('Redis Publisher not connected ERROR', err));
+(async () => {
+  // Connect Redis Client
+  await redisClient
+    .connect()
+    .then(() => console.log('Redis Client connected'))
+    .catch((err) => console.error('Redis Client connection error', err));
 
-// Connect Redis Client
-redisClient
-  .connect()
-  .then(() => console.log('Redis Client connected'))
-  .catch((err) => console.error('Redis Client connection error', err));
+  redisClient.on('error', (err) => {
+    console.error('Redis error occurred:', err);
+  });
 
-redisClient.on('error', (err) => {
-  console.error('Redis error occurred:', err);
-});
+  redisClient.on('connect', () => {
+    console.log('Redis connected');
+  });
 
-redisClient.on('connect', () => {
-  console.log('Redis connected');
-});
+  redisClient.on('end', () => {
+    console.error('Redis client disconnected unexpectedly');
+  });
 
-redisClient.on('end', () => {
-  console.error('Redis client disconnected unexpectedly');
-});
+  await redisPublisher
+    .connect()
+    .then(() => console.log('Redis Publisher connected'))
+    .catch((err) => console.error('Redis Publisher not connected ERROR', err));
+})();
 
 // Express route handlers
 app.get('/', (req, res) => {
@@ -113,17 +115,6 @@ app.post('/values', async (req, res) => {
     if (!redisClient.isOpen) {
       throw new Error('Redis client is not connected');
     }
-
-    // Wait for Redis to be ready
-    if (redisClient.isReady && redisClient.isOpen) {
-      console.log('Redis client is ready and open');
-    }
-
-    console.log(
-      'Redis Publisher is ready, open:',
-      redisPublisher.isReady,
-      redisPublisher.isOpen
-    );
 
     // Ensure the Redis publisher is connected before publishing
     if (redisPublisher.isReady && redisPublisher.isOpen) {
