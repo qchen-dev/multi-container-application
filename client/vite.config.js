@@ -1,10 +1,17 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
-// https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
   server: {
-    allowedHosts: ['client'], // Add 'client' to the allowed hosts list
+    host: '0.0.0.0',
+    port: 5173,
+    allowedHosts: ['client'],
+    hmr: {
+      port: 3080,
+      clientPort: 3080,
+      protocol: 'ws',
+      path: '/ws',
+    },
   },
 });
