@@ -16,7 +16,8 @@ services:
       dockerfile: Dockerfile.dev
     container_name: nginx
     ports:
-      - '3080:80'
+      - '8080:80' # Change Nginx to use port 8080 on the host
+      - '3080:3080' # Expose WebSocket port separately for client
     depends_on:
       - api
       - client
@@ -25,8 +26,8 @@ services:
     build:
       context: ./server
       dockerfile: Dockerfile.dev
-    image: complex/server:latest
-    container_name: complex-server
+    image: complex/api:latest
+    container_name: api
     volumes:
       - /app/node_modules
       - ./server:/app
@@ -44,7 +45,7 @@ services:
       context: ./worker
       dockerfile: Dockerfile.dev
     image: complex/worker:latest
-    container_name: complex-worker
+    container_name: worker
     volumes:
       - /app/node_modules
       - ./worker:/app
@@ -57,7 +58,10 @@ services:
       context: ./client
       dockerfile: Dockerfile.dev
     image: complex/client:latest
-    container_name: complex-client
+    container_name: client
     volumes:
       - /app/node_modules
       - ./client:/app
+    environment:
+      - HOST=0.0.0.0
+      - WDS_SOCKET_PORT=3080
