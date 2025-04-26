@@ -5,6 +5,7 @@ import axios from 'axios';
 function Fib() {
   const [indexes, setIndexes] = useState([]); // Make it an array
   const [values, setValues] = useState({});
+  const [reload, setReload] = useState(0);
 
   useEffect(() => {
     const fetchValues = async () => {
@@ -14,12 +15,14 @@ function Fib() {
 
     const fetchIndexes = async () => {
       const indexes = await axios.get('/api/values/all');
-      setIndexes(indexes.data); // Set the raw data
+      // setIndexes([...indexes.data]); // Set the raw data
+
+      setIndexes(indexes.data.map((data) => data.number));
     };
 
     fetchValues();
     fetchIndexes();
-  }, []);
+  }, [reload]);
 
   const {
     register,
@@ -30,13 +33,10 @@ function Fib() {
   } = useForm();
 
   const onSubmit = async (data) => {
-    console.log(data);
-
     await axios.post('/api/values', data);
     reset();
+    setReload((reload) => reload + 1);
   };
-
-  console.log('watch on input change:', watch('index'));
 
   function renderIndexes() {
     return indexes.join(', '); // Simple way to display all indexes
