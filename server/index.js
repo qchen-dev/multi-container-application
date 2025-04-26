@@ -55,9 +55,7 @@ const redisPublisher = redisClient.duplicate();
 redisPublisher
   .connect()
   .then(() => console.log('Redis Publisher connected'))
-  .catch((err) =>
-    console.error('Redis Publisher not connected ERROR', err)
-  );
+  .catch((err) => console.error('Redis Publisher not connected ERROR', err));
 
 // Connect Redis Client
 redisClient
@@ -120,9 +118,6 @@ app.post('/values', async (req, res) => {
     if (redisClient.isReady && redisClient.isOpen) {
       console.log('Redis client is ready and open');
     }
-
-    // Store in Redis
-    await redisClient.hSet('values', index, 'Nothing yet!');
 
     console.log(
       'Redis Publisher is ready, open:',

@@ -41,7 +41,7 @@ redisSubscriber
   .catch((err) => console.error('Redis connection error:', err));
 
 // Subscribe to the 'insert' channel
-redisSubscriber.subscribe('insert', (message, channel) => {
+redisSubscriber.subscribe('insert', async (message, channel) => {
   console.log('Received message:', message);
   console.log('Channel:', channel);
 
@@ -50,6 +50,14 @@ redisSubscriber.subscribe('insert', (message, channel) => {
 
     if (isNaN(index)) {
       console.error('Received invalid index:', message);
+      return;
+    }
+
+    // Check if the Fibonacci value is already stored
+    const existingValue = await redisClient.hGet('values', index.toString());
+
+    if (existingValue !== null) {
+      console.log(`Index ${index} already calculated. Skipping.`);
       return;
     }
 
