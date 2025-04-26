@@ -1,0 +1,32 @@
+name: Deploy Multi-Container
+
+on:
+  push:
+    branches: ['main']
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Login to Docker Hub
+        run: docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+
+      # - name: Build Docker image for testing (using Dockerfile.dev)
+      #   run: docker build -t nickdev/react-test -f ./client/Dockerfile.dev ./client
+
+      # - name: Run tests in Docker container
+      #   run: docker run -e CI=true rallycoding/react-test npm test
+
+      - run: docker build -t nickdev/multi-client ./client
+      - run: docker build -t nickdev/multi-nginx ./nginx
+      - run: docker build -t nickdev/multi-server ./server
+      - run: docker build -t nickdev/multi-worker ./worker
+
+      - run: docker push nickdev/multi-client
+      - run: docker push nickdev/multi-nginx
+      - run: docker push nickdev/multi-server
+      - run: docker push nickdev/multi-worker
