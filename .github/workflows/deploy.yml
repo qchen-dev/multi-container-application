@@ -5,7 +5,7 @@ on:
     branches: ['main']
 
 jobs:
-  build:
+  docker-test:
     runs-on: ubuntu-latest
 
     steps:
@@ -18,15 +18,24 @@ jobs:
       - name: Run tests in Docker container
         run: docker run -e CI=true nickdev/react-test npm test
 
+  push-docker-hub:
+    runs-on: ubuntu-latest
+    needs: docker-test # Ensures tests run before image build and push to docker hub
+
+    steps:
       - name: Login to Docker Hub
         run: docker login -u "${{ secrets.DOCKER_USERNAME }}" -p "${{ secrets.DOCKER_PASSWORD }}"
 
-      - run: docker build -t nickchendev/multi-client ./client
-      - run: docker build -t nickchendev/multi-nginx ./nginx
-      - run: docker build -t nickchendev/multi-server ./server
-      - run: docker build -t nickchendev/multi-worker ./worker
+      - name: Build docker images
+        run: |
+          docker build -t nickchendev/multi-client ./client
+          docker build -t nickchendev/multi-nginx ./nginx
+          docker build -t nickchendev/multi-server ./server
+          docker build -t nickchendev/multi-worker ./worker
 
-      - run: docker push nickchendev/multi-client
-      - run: docker push nickchendev/multi-nginx
-      - run: docker push nickchendev/multi-server
-      - run: docker push nickchendev/multi-worker
+      - name: Push images to dockerhub
+        run: |
+          docker push nickchendev/multi-client
+          docker push nickchendev/multi-nginx
+          docker push nickchendev/multi-server
+          docker push nickchendev/multi-worker
