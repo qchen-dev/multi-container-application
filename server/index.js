@@ -34,6 +34,16 @@ postgresClient.on('connect', (client) => {
 // https://redis.io/docs/latest/develop/clients/nodejs/
 const { createClient } = require('redis');
 
+console.log(
+  'server-debug Connecting to Redis at:',
+  keys.redisHost,
+  keys.redisPort
+);
+console.log(
+  'server-debug Connecting to Redis url:',
+  `redis://${keys.redisHost}:${keys.redisPort}`
+);
+
 const redisClient = createClient({
   url: `redis://${keys.redisHost}:${keys.redisPort}`,
   socket: {
