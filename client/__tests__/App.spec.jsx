@@ -32,7 +32,7 @@ describe('App', () => {
     expect(link).toBeInTheDocument();
 
     // Instruction text
-    const docsText = screen.getByText(/click on the vite and react logos/i);
+    const docsText = screen.getByText(/this is fib calculator/i);
     expect(docsText).toBeInTheDocument();
 
     // Wait for indexes to appear
