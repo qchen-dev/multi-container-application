@@ -1,67 +1,33 @@
 services:
-  postgres:
-    image: 'postgres:latest'
-    container_name: postgres
+  client:
+    image: 'nickchendev/multi-client'
+    mem_limit: 128m
+    hostname: client
+
+  server:
+    image: 'nickchendev/multi-server'
+    mem_limit: 128m
+    hostname: api
     environment:
-      - POSTGRES_PASSWORD=postgres_password
-
-  redis:
-    image: 'redis:latest'
-    container_name: redis
-
-  nginx:
-    restart: always
-    build:
-      context: ./nginx
-      dockerfile: Dockerfile.dev
-    container_name: nginx
-    ports:
-      - '8080:80' # Change Nginx to use port 8080 on the host
-      - '3080:3080' # Expose WebSocket port separately for client
-    depends_on:
-      - api
-      - client
-
-  api:
-    build:
-      context: ./server
-      dockerfile: Dockerfile.dev
-    image: complex/api:latest
-    container_name: api
-    volumes:
-      - /app/node_modules
-      - ./server:/app
-    environment:
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - POSTGRES_USER=postgres
-      - POSTGRES_HOST=postgres
-      - POSTGRES_DATABASE=postgres
-      - POSTGRES_PASSWORD=postgres_password
-      - POSTGRES_PORT=5432
+      - REDIS_HOST=$REDIS_HOST
+      - REDIS_PORT=$REDIS_PORT
+      - POSTGRES_USER=$POSTGRES_USER
+      - POSTGRES_HOST=$POSTGRES_HOST
+      - POSTGRES_DATABASE=$POSTGRES_DATABASE
+      - POSTGRES_PASSWORD=$POSTGRES_PASSWORD
+      - POSTGRES_PORT=$POSTGRES_PORT
 
   worker:
-    build:
-      context: ./worker
-      dockerfile: Dockerfile.dev
-    image: complex/worker:latest
-    container_name: worker
-    volumes:
-      - /app/node_modules
-      - ./worker:/app
+    image: 'nickchendev/multi-worker'
+    mem_limit: 128m
+    hostname: worker
     environment:
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
+      - REDIS_HOST=$REDIS_HOST
+      - REDIS_PORT=$REDIS_PORT
 
-  client:
-    build:
-      context: ./client
-      dockerfile: Dockerfile.dev
-    image: complex/client:latest
-    container_name: client
-    volumes:
-      - /app/node_modules
-      - ./client:/app
-    environment:
-      - HOST=0.0.0.0
-      - WDS_SOCKET_PORT=3080
+  nginx:
+    image: 'nickchendev/multi-nginx'
+    mem_limit: 128m
+    hostname: nginx
+    ports:
+      - '80:80'
