@@ -35,7 +35,7 @@ postgresClient.on('connect', (client) => {
 const { createClient } = require('redis');
 
 console.log(
-  'server-debug Connecting to Redis at:',
+  'server-debug try Connecting to Redis at:',
   keys.redisHost,
   keys.redisPort
 );
