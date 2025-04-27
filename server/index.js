@@ -116,10 +116,6 @@ app.post('/values', async (req, res) => {
   console.log('visit /values', req.body);
   const index = req.body.index;
 
-  if (parseInt(index) > 40) {
-    return res.status(422).send('Index too high');
-  }
-
   try {
     // Check if Redis is connected
     if (!redisClient.isOpen) {
