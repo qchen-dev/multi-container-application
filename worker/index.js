@@ -4,7 +4,14 @@ const keys = require('./keys');
 // https://redis.io/docs/latest/develop/clients/nodejs/
 const { createClient } = require('redis');
 
+console.log('debug Connecting to Redis at:', keys.redisHost, keys.redisPort);
+console.log(
+  'debug Connecting to Redis url:',
+  `redis://${keys.redisHost}:${keys.redisPort}`
+);
+
 const redisClient = createClient({
+  // url: `redis://${keys.redisHost}:${keys.redisPort}`,
   url: `redis://${keys.redisHost}:${keys.redisPort}`,
   socket: {
     reconnectStrategy: (retries) => {
