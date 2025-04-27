@@ -1,12 +1,16 @@
+version: '3'
+
 services:
   client:
     image: 'nickchendev/multi-client'
+    container_name: client-v1
     mem_limit: 128m
     hostname: client
 
   server:
     image: 'nickchendev/multi-server'
     mem_limit: 128m
+    container_name: server-v1
     hostname: api
     environment:
       - REDIS_HOST=$REDIS_HOST
@@ -20,6 +24,7 @@ services:
   worker:
     image: 'nickchendev/multi-worker'
     mem_limit: 128m
+    container_name: worker-v1
     hostname: worker
     environment:
       - REDIS_HOST=$REDIS_HOST
@@ -28,6 +33,10 @@ services:
   nginx:
     image: 'nickchendev/multi-nginx'
     mem_limit: 128m
+    container_name: nginx-v1
     hostname: nginx
     ports:
       - '80:80'
+    depends_on:
+      - server
+      - client
