@@ -13,13 +13,13 @@ This application integrates multiple services: a **React frontend**, a **Node.js
   The Node.js server handles HTTP requests from the frontend. It performs business logic, processes user input, publishes tasks to the **Redis message queue**, and stores the user input in the **PostgreSQL database**.
 
 - **Worker Service**:  
-  The worker service listens to a Redis channel for new tasks. When a new task is published to the Redis channel, the worker retrieves it, performs the required computation (e.g., calculates Fibonacci numbers), and stores the result in **Redis** as a key-value pair. The **PostgreSQL database** only stores the user input (the number), while Redis stores both the user input and the computed result.
+  The worker service subscribes to Redis channel for `insert` event. When `insert` event is published to the Redis channel, the worker retrieves it, performs the required computation (e.g., calculates Fibonacci numbers), and stores the result in **Redis** as a key-value pair. The **PostgreSQL database** only stores the user input (the number), while Redis stores both the user input and the computed result.
 
 - **Nginx Reverse Proxy**:  
-  Nginx serves as a reverse proxy that routes traffic to either the frontend (React) or the backend (Node.js) based on the URL. It ensures proper load balancing and traffic distribution.
+  Nginx serves as a reverse proxy that routes traffic to either the frontend (React) or the backend (Node.js) based on the URL. It ensures traffic distribution.
 
 - **Redis (Pub/Sub)**:  
-  Redis is used as a message broker between the backend and the worker service. The backend publishes a task (e.g., Fibonacci calculation) to a Redis channel. The worker listens for these tasks and performs computations. Redis also stores the key-value pairs for user input numbers and computed Fibonacci results.
+  Redis is used as a message broker between the backend and the worker service. The backend publishes `insert` event (e.g., Fibonacci calculation) to Redis channel. The worker subscribes for `insert` event and performs computations. Redis also stores the key-value pairs for user input numbers and computed Fibonacci results.
 
 - **PostgreSQL Database**:  
   The database stores the user input (number) for persistence. Only the user input is saved in the database, while Redis holds both the input and the computed Fibonacci results for real-time access.
@@ -36,8 +36,8 @@ This application integrates multiple services: a **React frontend**, a **Node.js
 
 3. **Task Processing by Worker**:
 
-   - The **worker service** listens to the Redis channel.
-   - When the worker service receives a new task (user input), it computes the Fibonacci result asynchronously.
+   - The **worker service** subscribes to the Redis channel.
+   - When the worker service receives `insert` event (user input), it computes the Fibonacci result asynchronously.
    - The Fibonacci result is saved in **Redis** as a key-value pair, where the key is the user input (number) and the value is the calculated Fibonacci result.
    - The **PostgreSQL database** only stores the user input (the number), without the computed result.
 
@@ -49,7 +49,7 @@ This application integrates multiple services: a **React frontend**, a **Node.js
 
 - **Frontend**: React (client-side)
 - **Backend**: Node.js (server-side), Express
-- **Worker**: Node.js (worker), Redis Pub/Sub for task messaging
+- **Worker**: Node.js (worker), Redis Pub/Sub for event messaging
 - **Database**: PostgreSQL (for data persistence)
 - **Message Broker**: Redis (used for pub/sub and caching)
 - **Reverse Proxy**: Nginx (routes traffic to the correct service)
@@ -72,6 +72,7 @@ This project deploys a multi-container Docker application to AWS Elastic Beansta
 
 1. **Push Docker Images to Docker Hub**:  
    Docker images are built for each service (client, server, worker, Nginx) and pushed to Docker Hub.
+
 2. **Prepare Docker Environment**:  
    Docker Compose is used to define and configure the multi-container environment.
 
@@ -81,16 +82,6 @@ This project deploys a multi-container Docker application to AWS Elastic Beansta
 4. **Monitor & Scale**:  
    Elastic Beanstalk automatically scales the application based on demand and ensures the proper routing of requests to services.
 
-## 🚀 Deployment Overview
-
-When you push to the `main` branch:
-
-1. GitHub Actions will build Docker images for each service.
-2. It will push the images to Docker Hub.
-3. It will zip the entire project (excluding `.git`) into `deploy.zip`.
-4. It will deploy `deploy.zip` to AWS Elastic Beanstalk.
-5. Elastic Beanstalk will pull images from Docker Hub based on your docker-compose.yml.
-
 ---
 
 # ⚙️ How It Works (Step-by-Step)
@@ -99,7 +90,7 @@ When you push to the `main` branch:
 2. GitHub Actions automatically:
    - Builds images for client, server, worker, nginx.
    - Pushes images to Docker Hub.
-   - Creates `deploy.zip` (zipping **all project files**).
+   - Creates `deploy.zip` (zipping **all project files [excluding `.git`]**).
    - Deploys `deploy.zip` to Elastic Beanstalk.
 3. Elastic Beanstalk:
    - Reads `docker-compose.yml`.
